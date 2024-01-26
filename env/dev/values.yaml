@@ -1,0 +1,53 @@
+# Change this to set a name for your model
+name: ai-boilerplate-model
+
+# Set here the name of the image and the tag you want to use (next time tag will be updated with commitizen)
+image:
+  repository: europe-west1-docker.pkg.dev/fc-shared/it-cross/ai-boilerplate-devel # Change this to your image repository
+  tag: 0.0.1 # Change this to your image tag
+
+# Limits the number of GPU to 1. Change it if you need more o even you want to use CPU instead.
+resources:
+  limits:
+    nvidia.com/gpu: 1
+
+# Set the service type to ClusterIP
+service:
+  type: ClusterIP
+
+# Enable the API Gateway and set the parentRefs to the istio gateway
+apiGateway:
+  enabled: true
+  parentRefs:
+    name: stable-gateway
+    namespace: istio-system
+
+# Set the route to the model
+routes:
+  cog-ai-model-cog-ai-extra-rule:
+    rules:
+      - matchesExtra: # Due to implementation constraint only 8 match per rule are allowed
+          - path:
+              type: PathPrefix
+              value: /
+            headers:
+              - type: Exact           # Exact, RegularExpression
+                name: model
+                value: cog_change_me  # This is changed by tilt on the fly
+
+livenessProbe:
+  failureThreshold: 10
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  httpGet:
+    path: /
+    port: http
+    scheme: HTTP
+readinessProbe:
+  failureThreshold: 10
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  httpGet:
+    path: /
+    port: http
+    scheme: HTTP
